@@ -28,16 +28,20 @@ export default function SobreIdoso() {
     if (dados.idosoTemConta && dados.codigo.trim().length < 6) return setErro('Digite o código de conexão de 6 caracteres.');
     setErro('');
     setCarregando(true);
-    await criarConta({
+    const msg = await criarConta({
       perfil: 'cuidador',
       nome: dados.nome.trim(),
       email: dados.email.trim(),
+      senha: dados.senha,
       telefone: dados.telefone.trim() || undefined,
-      nomePaciente: dados.nomeIdoso.trim(),
-      relacao: dados.relacao,
-      codigoConexao: dados.idosoTemConta ? dados.codigo.trim().toUpperCase() : undefined,
+      extras: {
+        nomePaciente: dados.nomeIdoso.trim(),
+        relacao: dados.relacao,
+        codigoConexao: dados.idosoTemConta ? dados.codigo.trim().toUpperCase() : undefined,
+      },
     });
     setCarregando(false);
+    if (msg) return setErro(msg);
     router.replace('/(auth)/pronto');
   };
 

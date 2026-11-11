@@ -37,10 +37,10 @@ export default function Login() {
         <Text style={fonte.suave}>Faça seu login para continuar com o seu cuidado.</Text>
       </View>
 
-      <CampoTexto icone="person-outline" placeholder="E-mail ou CPF" autoCapitalize="none" keyboardType="email-address" value={email} onChangeText={setEmail} />
+      <CampoTexto icone="person-outline" placeholder="E-mail" autoCapitalize="none" keyboardType="email-address" value={email} onChangeText={setEmail} />
       <CampoTexto icone="lock-closed-outline" placeholder="Senha" senha value={senha} onChangeText={setSenha} erro={erro} />
 
-      <Pressable onPress={() => setErro('Recuperação de senha chega com o Firebase (fase 2).')} style={{ alignSelf: 'flex-end' }}>
+      <Pressable onPress={() => setErro('A recuperação de senha chega em uma próxima versão.')} style={{ alignSelf: 'flex-end' }}>
         <Text style={{ fontSize: 16, fontWeight: '700', color: colors.azulEscuro }}>Esqueceu sua senha?</Text>
       </Pressable>
 
