@@ -12,6 +12,7 @@ import { useCaixa } from '../src/hooks/useCaixa';
 import { colors } from '../src/theme/colors';
 import { fonte, raio } from '../src/theme/typography';
 import { normalizarHorario } from '../src/utils/datas';
+import { novoId } from '../src/utils/id';
 import { Compartimento } from '../src/types';
 
 export default function MedicamentoNovo() {
@@ -52,7 +53,7 @@ export default function MedicamentoNovo() {
     if (!Number(qtd) || Number(qtd) < 1) return setErro('Informe a quantidade por dose.');
     if (horarios.length === 0) return setErro('Adicione pelo menos um horário.');
     const lista = await salvar({
-      id: String(Date.now()),
+      id: novoId(),
       criadoEm: Date.now(),
       nome: nome.trim(),
       quantidadePorDose: Number(qtd),

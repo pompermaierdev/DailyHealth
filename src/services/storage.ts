@@ -3,7 +3,13 @@ import { EventoAdesao, Medicamento, Usuario } from '../types';
 import { ultimosDias } from '../utils/datas';
 import { criadoEm, dataDaDose, dataHoraAgendada, LIMITE_PERDIDO_MS } from '../utils/doses';
 
-const K = { usuario: '@dh/usuario', meds: '@dh/medicamentos', eventos: '@dh/eventos' };
+const K = {
+  usuario: '@dh/usuario',
+  meds: '@dh/medicamentos',
+  eventos: '@dh/eventos',
+  remocoes: '@dh/remocoes', // remédios apagados aqui que ainda precisam ser apagados na nuvem
+  dono: '@dh/dono', // id de quem é dono dos dados guardados neste celular
+};
 
 async function ler<T>(chave: string, padrao: T): Promise<T> {
   try {
@@ -15,6 +21,26 @@ async function ler<T>(chave: string, padrao: T): Promise<T> {
 }
 const gravar = (chave: string, valor: unknown) => AsyncStorage.setItem(chave, JSON.stringify(valor));
 
+// ---- avisos de mudança ----
+// aoMudarDados: o usuário mexeu nos dados -> a sincronização precisa enviar
+// aoSincronizarDados: a nuvem trouxe dados novos -> as telas precisam recarregar
+const ouvintesMudanca = new Set<() => void>();
+const ouvintesSync = new Set<() => void>();
+export function aoMudarDados(fn: () => void) {
+  ouvintesMudanca.add(fn);
+  return () => {
+    ouvintesMudanca.delete(fn);
+  };
+}
+export function aoSincronizarDados(fn: () => void) {
+  ouvintesSync.add(fn);
+  return () => {
+    ouvintesSync.delete(fn);
+  };
+}
+const mudou = () => ouvintesMudanca.forEach((f) => f());
+export const notificarSincronizado = () => ouvintesSync.forEach((f) => f());
+
 // ---- usuário ----
 export const carregarUsuario = () => ler<Usuario | null>(K.usuario, null);
 export const salvarUsuario = (u: Usuario) => gravar(K.usuario, u);
@@ -22,18 +48,38 @@ export const removerUsuario = () => AsyncStorage.removeItem(K.usuario);
 
 // ---- medicamentos ----
 export const carregarMedicamentos = () => ler<Medicamento[]>(K.meds, []);
+
 export async function salvarMedicamento(m: Medicamento) {
   const lista = await carregarMedicamentos();
   const i = lista.findIndex((x) => x.id === m.id);
   if (i >= 0) lista[i] = m;
   else lista.push(m);
   await gravar(K.meds, lista);
+  mudou();
   return lista;
 }
+
 export async function removerMedicamento(id: string) {
   const lista = (await carregarMedicamentos()).filter((m) => m.id !== id);
   await gravar(K.meds, lista);
+  const pendentes = await ler<string[]>(K.remocoes, []);
+  if (!pendentes.includes(id)) await gravar(K.remocoes, [...pendentes, id]);
+  mudou();
   return lista;
+}
+
+// usados pela sincronização (não disparam "mudou", para não entrar em ciclo)
+export const substituirMedicamentos = (lista: Medicamento[]) => gravar(K.meds, lista);
+export const substituirEventos = (lista: EventoAdesao[]) => gravar(K.eventos, lista);
+export const listarRemocoes = () => ler<string[]>(K.remocoes, []);
+export const limparRemocoes = () => AsyncStorage.removeItem(K.remocoes);
+export const lerDono = () => ler<string | null>(K.dono, null);
+export const gravarDono = (id: string) => gravar(K.dono, id);
+
+// Apaga os dados deste celular (ao trocar de conta ou sair)
+export async function limparDadosLocais() {
+  await AsyncStorage.multiRemove([K.meds, K.eventos, K.remocoes, K.dono]);
+  notificarSincronizado();
 }
 
 // ---- eventos de adesão ----
@@ -67,7 +113,9 @@ export async function registrarEvento(
 
   if (status === 'tomado' && med.totalComprimidos > 0) {
     med.totalComprimidos = Math.max(0, med.totalComprimidos - med.quantidadePorDose);
-    await salvarMedicamento(med);
+    await salvarMedicamento(med); // também avisa a sincronização
+  } else {
+    mudou();
   }
 }
 
@@ -76,7 +124,7 @@ export async function fecharDosesVencidas(agora: Date = new Date()) {
   const meds = await carregarMedicamentos();
   if (meds.length === 0) return;
   const eventos = await carregarEventos();
-  let mudou = false;
+  let alterou = false;
   for (const data of ultimosDias(7)) {
     for (const med of meds) {
       for (const horario of med.horarios) {
@@ -94,9 +142,12 @@ export async function fecharDosesVencidas(agora: Date = new Date()) {
           status: 'perdido',
           registradoEm: quando + LIMITE_PERDIDO_MS,
         });
-        mudou = true;
+        alterou = true;
       }
     }
   }
-  if (mudou) await gravar(K.eventos, eventos);
+  if (alterou) {
+    await gravar(K.eventos, eventos);
+    mudou();
+  }
 }

@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { EventoAdesao, Medicamento } from '../types';
-import { carregarEventos, carregarMedicamentos, fecharDosesVencidas, removerMedicamento, salvarMedicamento } from '../services/storage';
+import {
+  aoSincronizarDados,
+  carregarEventos,
+  carregarMedicamentos,
+  fecharDosesVencidas,
+  removerMedicamento,
+  salvarMedicamento,
+} from '../services/storage';
 import { hojeISO } from '../utils/datas';
 import { DoseDia, dosesDoDia } from '../utils/doses';
 import { reagendarNotificacoes } from '../services/notificacoes';
@@ -26,6 +33,9 @@ export function useMedicamentos() {
   useEffect(() => {
     recarregar();
   }, [recarregar]);
+
+  // recarrega quando a sincronização trouxer algo novo da nuvem
+  useEffect(() => aoSincronizarDados(() => { recarregar(); }), [recarregar]);
 
   // recarrega sempre que a tela volta ao foco
   useFocusEffect(

@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { supabase, supabaseConfigurado } from '../services/supabase';
-import { carregarUsuario, removerUsuario, salvarUsuario } from '../services/storage';
+import { carregarUsuario, limparDadosLocais, removerUsuario, salvarUsuario } from '../services/storage';
+import { sincronizarAgora } from '../services/sincronizacao';
+import { reagendarNotificacoes } from '../services/notificacoes';
 import { Usuario } from '../types';
 
 // Dados extras (questionário e cuidador) guardados em perfis.extras
@@ -166,8 +168,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const sair = async () => {
+    // envia o que ainda não subiu (no máximo 4 s, para não travar sem internet)
+    await Promise.race([sincronizarAgora(), new Promise((r) => setTimeout(r, 4000))]);
     await supabase.auth.signOut();
+    await limparDadosLocais(); // o próximo usuário deste celular não vê estes dados
     await removerUsuario();
+    reagendarNotificacoes();
     setUsuario(null);
   };
 
