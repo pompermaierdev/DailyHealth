@@ -1,0 +1,21 @@
+export const colors = {
+  rosa: '#FF6B8F',
+  rosaEscuro: '#F04D77',
+  rosaClaro: '#FDEBF1',
+  azul: '#5B7BF0',
+  azulEscuro: '#3F5FD8',
+  azulClaro: '#E8EDFF',
+  navy: '#2B3A67',
+  fundo: '#FFF9FC',
+  branco: '#FFFFFF',
+  texto: '#2B3A67',
+  textoSuave: '#5F6B91',
+  borda: '#D5DDF7',
+  sucesso: '#2E9E68',
+  sucessoClaro: '#E3F6EC',
+  alerta: '#F5A524',
+  alertaClaro: '#FFF3DA',
+  erro: '#D93B5B',
+  // uma cor por compartimento da caixa (1..4)
+  compartimento: { 1: '#FF8FA8', 2: '#7FB2FF', 3: '#FFC857', 4: '#7ED9A6' } as Record<number, string>,
+};

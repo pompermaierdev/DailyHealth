@@ -1,0 +1,19 @@
+# o que NÃO deve ser enviado para o build na nuvem do EAS
+node_modules/
+.expo/
+dist/
+web-build/
+android/
+ios/
+
+# partes do projeto que o app não usa
+firmware/
+supabase/
+
+.env
+.env.*
+!.env.example
+*.log
+*.apk
+*.aab
+.DS_Store
