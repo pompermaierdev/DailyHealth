@@ -14,15 +14,15 @@ export default function Pronto() {
   const { dados, limpar } = useCadastro();
   const proprio = dados.perfil === 'proprio';
   const nome = (usuario?.nomePreferido || usuario?.nome || '').split(' ')[0];
+  const codigoSalvo = usuario?.codigoConexao;
 
-  const entrar = (destino: '/(tabs)/medicamentos' | '/(tabs)' | '/caixa') => {
+  const concluir = (extra?: 'caixa' | 'gerar' | 'conectar') => {
+    const base = proprio ? '/(tabs)/medicamentos' : '/(tabs)';
     limpar();
-    if (destino === '/caixa') {
-      router.replace('/(tabs)');
-      router.push('/caixa');
-    } else {
-      router.replace(destino);
-    }
+    router.replace(base);
+    if (extra === 'caixa') router.push('/caixa');
+    if (extra === 'gerar') router.push('/conexoes');
+    if (extra === 'conectar') router.push({ pathname: '/conexoes', params: { codigo: codigoSalvo } });
   };
 
   return (
@@ -40,12 +40,18 @@ export default function Pronto() {
 
       <View style={{ gap: 12, paddingBottom: 20 }}>
         {proprio && dados.temCaixa === true && (
-          <Botao titulo="Conectar minha caixa" icone="bluetooth" variante="secundario" onPress={() => entrar('/caixa')} />
+          <Botao titulo="Conectar minha caixa" icone="bluetooth" variante="secundario" onPress={() => concluir('caixa')} />
+        )}
+        {proprio && dados.querConectarFamiliar === true && (
+          <Botao titulo="Gerar código para um familiar" icone="key-outline" variante="secundario" onPress={() => concluir('gerar')} />
+        )}
+        {!proprio && !!codigoSalvo && (
+          <Botao titulo="Conectar à pessoa agora" icone="link-outline" variante="secundario" onPress={() => concluir('conectar')} />
         )}
         <Botao
           titulo={proprio ? 'Ir para meus medicamentos' : 'Ir para o início'}
           icone="arrow-forward"
-          onPress={() => entrar(proprio ? '/(tabs)/medicamentos' : '/(tabs)')}
+          onPress={() => concluir()}
         />
       </View>
     </Tela>

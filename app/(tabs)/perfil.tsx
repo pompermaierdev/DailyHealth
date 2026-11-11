@@ -8,19 +8,20 @@ import { useAuth } from '../../src/context/AuthContext';
 import { colors } from '../../src/theme/colors';
 import { fonte, raio } from '../../src/theme/typography';
 
-const ROTULO = { proprio: 'Uso próprio', responsavel: 'Responsável', cuidador: 'Cuidador' } as const;
+const ROTULO = { proprio: 'Uso próprio', responsavel: 'Cuidador / Responsável', cuidador: 'Cuidador / Responsável' } as const;
 
 export default function Perfil() {
   const { usuario, sair } = useAuth();
   if (!usuario) return null;
+  const cuidador = usuario.perfil === 'cuidador';
 
   const dados: [string, string | undefined][] = [
     ['Nome', usuario.nome],
+    ['Como prefere ser chamado(a)', usuario.nomePreferido],
     ['E-mail', usuario.email],
+    ['Telefone', usuario.telefone],
     ['Perfil', ROTULO[usuario.perfil]],
-    ['Idade', usuario.idade ? `${usuario.idade} anos` : undefined],
     ['Pessoa cuidada', usuario.nomePaciente],
-    ['Responsável', usuario.emailResponsavel ?? usuario.telefoneResponsavel],
   ];
 
   return (
@@ -36,8 +37,15 @@ export default function Perfil() {
             </View>
           ))}
       </View>
-      <StatusBluetooth />
-      <Botao titulo="Minha caixa" icone="bluetooth" variante="secundario" onPress={() => router.push('/caixa')} />
+
+      {!cuidador && <StatusBluetooth />}
+      {!cuidador && <Botao titulo="Minha caixa" icone="bluetooth" variante="secundario" onPress={() => router.push('/caixa')} />}
+      <Botao
+        titulo={cuidador ? 'Pessoas que acompanho' : 'Familiares e cuidadores'}
+        icone="people-outline"
+        variante="secundario"
+        onPress={() => router.push('/conexoes')}
+      />
       <Botao
         titulo="Sair"
         variante="fantasma"

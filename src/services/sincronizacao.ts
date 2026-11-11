@@ -91,7 +91,7 @@ async function garantirUuids() {
   );
 }
 
-const paraLocal = (r: any): Medicamento => ({
+export const paraLocal = (r: any): Medicamento => ({
   id: r.id,
   nome: r.nome,
   quantidadePorDose: r.quantidade_por_dose,
@@ -113,7 +113,7 @@ const paraLinha = (m: Medicamento, pacienteId: string) => ({
   criado_em: new Date(criadoEm(m)).toISOString(),
 });
 
-const paraEventoLocal = (r: any): EventoAdesao => ({
+export const paraEventoLocal = (r: any): EventoAdesao => ({
   id: `${r.medicamento_id}-${r.data}-${r.horario_agendado}`,
   medicamentoId: r.medicamento_id,
   nome: r.nome,

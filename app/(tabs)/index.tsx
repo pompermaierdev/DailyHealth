@@ -4,6 +4,8 @@ import { router } from 'expo-router';
 import { Tela } from '../../src/components/Tela';
 import { Logo } from '../../src/components/Logo';
 import { StatusBluetooth } from '../../src/components/StatusBluetooth';
+import { AvisoPedidos } from '../../src/components/AvisoPedidos';
+import { InicioCuidador } from '../../src/components/InicioCuidador';
 import { CardMedicamento } from '../../src/components/CardMedicamento';
 import { Botao } from '../../src/components/Botao';
 import { useAuth } from '../../src/context/AuthContext';
@@ -22,13 +24,15 @@ function saudacao() {
 export default function Inicio() {
   const { usuario } = useAuth();
   const { dosesDeHoje, dosesAtrasadas, carregado } = useMedicamentos();
-  useAvisosIniciais(carregado, dosesAtrasadas);
+  useAvisosIniciais(carregado && usuario?.perfil !== 'cuidador', dosesAtrasadas);
 
   const total = dosesDeHoje.length;
   const tomadas = dosesDeHoje.filter((d) => d.status === 'tomado').length;
   const aberta = (d: DoseDia) => d.status === 'pendente' || d.status === 'atrasado';
   const proxima = dosesDeHoje.find(aberta);
   const primeiroNome = usuario?.nome.split(' ')[0] ?? '';
+
+  if (usuario?.perfil === 'cuidador') return <InicioCuidador />;
 
   return (
     <Tela>
@@ -41,6 +45,7 @@ export default function Inicio() {
       </View>
 
       <StatusBluetooth />
+      <AvisoPedidos />
 
       <View style={styles.progresso}>
         <Text style={fonte.subtitulo}>
