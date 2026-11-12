@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, Image, Pressable, Text, View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Tela } from '../src/components/Tela';
 import { Cabecalho } from '../src/components/Cabecalho';
 import { CampoTexto } from '../src/components/CampoTexto';
@@ -16,7 +16,8 @@ import { novoId } from '../src/utils/id';
 import { Compartimento } from '../src/types';
 
 export default function MedicamentoNovo() {
-  const { salvar } = useMedicamentos();
+  const { id: idEdicao } = useLocalSearchParams<{ id?: string }>();
+  const { salvar, medicamentos } = useMedicamentos();
   const { estado, sincronizarMedicamentos } = useCaixa();
 
   const [foto, setFoto] = useState<string | undefined>();
@@ -27,6 +28,20 @@ export default function MedicamentoNovo() {
   const [horarios, setHorarios] = useState<string[]>([]);
   const [novoHorario, setNovoHorario] = useState('');
   const [erro, setErro] = useState('');
+
+  // modo edição: preenche os campos com o remédio escolhido
+  useEffect(() => {
+    if (!idEdicao) return;
+    const m = medicamentos.find((x) => x.id === idEdicao);
+    if (!m) return;
+    setFoto(m.fotoUri);
+    setNome(m.nome);
+    setQtd(String(m.quantidadePorDose));
+    setTotal(String(m.totalComprimidos));
+    setComp(m.compartimento);
+    setHorarios(m.horarios);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idEdicao, medicamentos.length]);
 
   const tirarFoto = async () => {
     const p = await ImagePicker.requestCameraPermissionsAsync();
@@ -53,8 +68,8 @@ export default function MedicamentoNovo() {
     if (!Number(qtd) || Number(qtd) < 1) return setErro('Informe a quantidade por dose.');
     if (horarios.length === 0) return setErro('Adicione pelo menos um horário.');
     const lista = await salvar({
-      id: novoId(),
-      criadoEm: Date.now(),
+      id: idEdicao ?? novoId(),
+      criadoEm: medicamentos.find((x) => x.id === idEdicao)?.criadoEm ?? Date.now(),
       nome: nome.trim(),
       quantidadePorDose: Number(qtd),
       totalComprimidos: Number(total) || 0,
@@ -70,7 +85,7 @@ export default function MedicamentoNovo() {
   return (
     <Tela>
       <Cabecalho />
-      <Text style={fonte.titulo}>Cadastrar medicamento</Text>
+      <Text style={fonte.titulo}>{idEdicao ? 'Editar medicamento' : 'Cadastrar medicamento'}</Text>
 
       <View style={styles.fotoCard}>
         {foto ? (
